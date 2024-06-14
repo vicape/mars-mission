@@ -3,11 +3,11 @@ const axios = require('axios');
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.get('/', (req, res) => {
+app.get('/api', (req, res) => {
   res.send('Welcome to the Mars Mission API');
 });
 
-app.get('/users', async (req, res) => {
+app.get('/api/users', async (req, res) => {
   try {
     console.log('Fetching CSV file...');
     const response = await axios.get('https://mars2024.000webhostapp.com/users.csv');
