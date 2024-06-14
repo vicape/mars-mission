@@ -3,12 +3,10 @@ const axios = require('axios');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Ruta para la URL raíz
 app.get('/', (req, res) => {
   res.send('Welcome to the Mars Mission API');
 });
 
-// Ruta para obtener los usuarios del archivo CSV
 app.get('/users', async (req, res) => {
   try {
     console.log('Fetching CSV file...');
