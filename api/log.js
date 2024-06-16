@@ -6,13 +6,13 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Función para registrar el intento de inicio de sesión
-const logLoginAttempt = async (user, pass, ip) => {
+const logLoginAttempt = async (username, pass, ip) => {
   const time = new Date().toISOString();
 
   const { data, error } = await supabase
     .from('log')
     .insert([
-      { user, pass, time, ip }
+      { username, pass, time, ip }
     ]);
 
   if (error) {
