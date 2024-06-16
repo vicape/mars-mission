@@ -5,19 +5,29 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const logLoginAttempt = async (username, pass, ip) => {
-  const time = new Date().toISOString();
+  try {
+    const time = new Date().toISOString();
 
-  const { error } = await supabase
-    .from('log')
-    .insert([
-      { username, pass, time, ip }
-    ]);
+    // Validación básica
+    if (!username || !pass || !ip) {
+      throw new Error('Invalid data');
+    }
 
-  if (error) {
-    console.error('Error logging login attempt:', error);
-    throw new Error(error.message || 'Error logging login attempt');
-  } else {
-    console.log('Login attempt logged successfully');
+    const { data, error } = await supabase
+      .from('log')
+      .insert([
+        { username, pass, time, ip }
+      ]);
+
+    if (error) {
+      console.error('Error logging login attempt:', error);
+      throw new Error(error.message || 'Error logging login attempt');
+    } else {
+      console.log('Login attempt logged successfully', data);
+    }
+  } catch (error) {
+    console.error('Error in logLoginAttempt:', error);
+    throw error;
   }
 };
 

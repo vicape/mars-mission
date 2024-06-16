@@ -8,7 +8,7 @@ app.use(express.json());
 
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
-  const ip = req.ip;
+  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
   try {
     await logLoginAttempt(username, password, ip);
