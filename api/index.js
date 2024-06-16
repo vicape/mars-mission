@@ -4,7 +4,6 @@ const bodyParser = require('body-parser');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Middleware para obtener la IP del cliente y procesar datos JSON
 app.use((req, res, next) => {
   req.clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
   next();
