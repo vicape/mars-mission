@@ -19,7 +19,7 @@ app.post('/api/login', async (req, res) => {
     await logLoginAttempt(username, password, ip);
     res.status(200).json({ message: 'Login attempt logged' });
   } catch (error) {
-    res.status(500).json({ error: 'Error logging login attempt' });
+    res.status(500).json({ error: error.message });
   }
 });
 
