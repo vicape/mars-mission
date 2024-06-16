@@ -1,0 +1,7 @@
+# Ignorar la carpeta node_modules
+node_modules/
+
+# Otros archivos o carpetas que deseas ignorar
+.DS_Store
+.env
+dist/
