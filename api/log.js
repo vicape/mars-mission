@@ -20,14 +20,15 @@ const logLoginAttempt = async (username, password) => {
       })
     });
 
-    const data = await response.json();
-    if (response.ok) {
-      console.log('Data inserted successfully:', data);
-      return data;
-    } else {
-      console.error('Error inserting data:', data);
-      throw new Error(data.error.message);
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Fetch error: ${errorText}`);
     }
+
+    const data = await response.json();
+    console.log('Data inserted successfully:', data);
+    return data;
+
   } catch (error) {
     console.error('Fetch error:', error);
     throw error;
