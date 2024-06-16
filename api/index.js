@@ -1,29 +1,23 @@
 const express = require('express');
 const logLoginAttempt = require('./log');
-const bodyParser = require('body-parser');
+
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use((req, res, next) => {
-  req.clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-  next();
-});
-app.use(bodyParser.json());
+app.use(express.json());
 
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
-  const ip = req.clientIp;
+  const ip = req.ip;
 
   try {
     await logLoginAttempt(username, password, ip);
-    res.status(200).json({ message: 'Login attempt logged' });
+    res.status(200).send('Login attempt logged successfully');
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
 app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}/`);
+  console.log(`Server is running on port ${port}`);
 });
-
-module.exports = app;
