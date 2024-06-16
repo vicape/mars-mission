@@ -13,6 +13,8 @@ const logLoginAttempt = async (username, pass, ip) => {
       throw new Error('Invalid data');
     }
 
+    console.log('Logging attempt:', { username, pass, time, ip });
+
     const { data, error } = await supabase
       .from('log')
       .insert([

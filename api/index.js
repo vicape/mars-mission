@@ -1,23 +1,19 @@
-const express = require('express');
-const logLoginAttempt = require('./log');
+const { createClient } = require('@supabase/supabase-js');
 
-const app = express();
-const port = process.env.PORT || 3000;
+const supabaseUrl = 'https://yayrbsvafizrldmkxtvj.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlheXJic3ZhZml6cmxkbWt4dHZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTg0MTU0NDUsImV4cCI6MjAzMzk5MTQ0NX0.alW7sPzJLaJA_V9Ou4H7QtVotfpJQY9xqIplpr7gN4Q';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-app.use(express.json());
+const testSupabaseConnection = async () => {
+  const { data, error } = await supabase
+    .from('log')
+    .select('*');
 
-app.post('/api/login', async (req, res) => {
-  const { username, password } = req.body;
-  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-
-  try {
-    await logLoginAttempt(username, password, ip);
-    res.status(200).send('Login attempt logged successfully');
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  if (error) {
+    console.error('Error fetching data:', error);
+  } else {
+    console.log('Data fetched successfully:', data);
   }
-});
+};
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+testSupabaseConnection();
