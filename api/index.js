@@ -3,6 +3,7 @@ const cors = require('cors');
 const fetch = require('node-fetch');
 const logLoginAttempt = require('./log');
 const ipinfo = require('ipinfo');
+const { createClient } = require('@supabase/supabase-js'); // Asegúrate de importar createClient aquí
 
 const app = express();
 app.use(cors());
