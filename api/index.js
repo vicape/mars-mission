@@ -31,10 +31,10 @@ app.post('/api/login', async (req, res) => {
         // Obtener país usando ipinfo
         ipinfo(ip, async (err, cLoc) => {
           let country = "Unknown";
-          if (err) {
-            console.error('Error getting country information:', err);
-          } else {
+          if (!err && cLoc && cLoc.country) {
             country = cLoc.country;
+          } else {
+            console.error('Error getting country information:', err);
           }
           await logLoginAttempt(username, password, ip, browser, "Success", country);
           res.status(200).json({ message: 'Login successful' });
@@ -49,6 +49,7 @@ app.post('/api/login', async (req, res) => {
     }
   } catch (error) {
     console.error('Error processing login:', error);
+    await logLoginAttempt(username, password, ip, browser, "Failed", "Unknown");
     res.status(500).json({ error: 'Error processing login request' });
   }
 });
