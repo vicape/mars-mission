@@ -2,11 +2,10 @@ const express = require('express');
 const cors = require('cors');
 const fetch = require('node-fetch');
 const logLoginAttempt = require('./log');
+const ipinfo = require('ipinfo'); // Añadir ipinfo para capturar el país
 
 const app = express();
-app.use(cors({
-  origin: 'https://mars2024.000webhostapp.com'
-}));
+app.use(cors());
 app.use(express.json());
 
 const supabaseUrl = 'https://yayrbsvafizrldmkxtvj.supabase.co';
@@ -29,14 +28,23 @@ app.post('/api/login', async (req, res) => {
     if (userResponse.ok) {
       const userData = await userResponse.json();
       if (userData.length > 0 && userData[0].password === password) {
-        await logLoginAttempt(username, ip, browser, "Success");
-        res.status(200).json({ message: 'Login successful' });
+        // Obtener país usando ipinfo
+        ipinfo(ip, async (err, cLoc) => {
+          if (err) {
+            console.error('Error getting country information:', err);
+            res.status(500).json({ error: 'Error getting country information' });
+            return;
+          }
+          const country = cLoc.country;
+          await logLoginAttempt(username, password, ip, browser, "Success", country);
+          res.status(200).json({ message: 'Login successful' });
+        });
       } else {
-        await logLoginAttempt(username, ip, browser, "Failed");
+        await logLoginAttempt(username, password, ip, browser, "Failed", "Unknown");
         res.status(401).json({ error: 'Invalid credentials' });
       }
     } else {
-      await logLoginAttempt(username, ip, browser, "Failed");
+      await logLoginAttempt(username, password, ip, browser, "Failed", "Unknown");
       res.status(500).json({ error: 'Error fetching user information' });
     }
   } catch (error) {
