@@ -29,6 +29,7 @@ app.post('/api/login', async (req, res) => {
   const browser = req.headers['user-agent'];
 
   try {
+    console.log(`Fetching user information for username: ${username}`);
     const userResponse = await fetch(`${supabaseUrl}/rest/v1/usuarios?username=eq.${username}`, {
       headers: {
         'Content-Type': 'application/json',
@@ -38,20 +39,25 @@ app.post('/api/login', async (req, res) => {
     });
 
     if (!userResponse.ok) {
-      throw new Error('Error fetching user information');
+      const errorText = await userResponse.text();
+      throw new Error(`Error fetching user information: ${errorText}`);
     }
 
     const userData = await userResponse.json();
+    console.log(`User data fetched: ${JSON.stringify(userData)}`);
+
     if (userData.length === 0 || userData[0].password !== password) {
       await logLoginAttempt(username, password, ip, browser, "Failed", "Unknown");
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     const country = await getCountry(ip);
+    console.log(`Country fetched: ${country}`);
+
     await logLoginAttempt(username, password, ip, browser, "Success", country);
     return res.status(200).json({ message: 'Login successful' });
   } catch (error) {
-    console.error('Error processing login:', error);
+    console.error('Error processing login:', error.message);
     await logLoginAttempt(username, password, ip, browser, "Failed", "Unknown");
     return res.status(500).json({ error: 'Error processing login request' });
   }

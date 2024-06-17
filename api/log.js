@@ -5,6 +5,7 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 
 const logLoginAttempt = async (username, password, ip, browser, status, country) => {
   try {
+    console.log(`Logging login attempt for username: ${username}, status: ${status}, country: ${country}`);
     const response = await fetch(supabaseUrl, {
       method: 'POST',
       headers: {
