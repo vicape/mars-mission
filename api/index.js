@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const fetch = require('node-fetch');
 const logLoginAttempt = require('./log');
-const ipinfo = require('ipinfo'); // Añadir ipinfo para capturar el país
+const ipinfo = require('ipinfo');
 
 const app = express();
 app.use(cors());
@@ -25,32 +25,31 @@ app.post('/api/login', async (req, res) => {
       }
     });
 
-    if (userResponse.ok) {
-      const userData = await userResponse.json();
-      if (userData.length > 0 && userData[0].password === password) {
-        // Obtener país usando ipinfo
-        ipinfo(ip, async (err, cLoc) => {
-          let country = "Unknown";
-          if (!err && cLoc && cLoc.country) {
-            country = cLoc.country;
-          } else {
-            console.error('Error getting country information:', err);
-          }
-          await logLoginAttempt(username, password, ip, browser, "Success", country);
-          res.status(200).json({ message: 'Login successful' });
-        });
-      } else {
-        await logLoginAttempt(username, password, ip, browser, "Failed", "Unknown");
-        res.status(401).json({ error: 'Invalid credentials' });
-      }
-    } else {
-      await logLoginAttempt(username, password, ip, browser, "Failed", "Unknown");
-      res.status(500).json({ error: 'Error fetching user information' });
+    if (!userResponse.ok) {
+      throw new Error('Error fetching user information');
     }
+
+    const userData = await userResponse.json();
+    if (userData.length === 0 || userData[0].password !== password) {
+      await logLoginAttempt(username, password, ip, browser, "Failed", "Unknown");
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    ipinfo(ip, async (err, cLoc) => {
+      let country = "Unknown";
+      if (!err && cLoc && cLoc.country) {
+        country = cLoc.country;
+      } else {
+        console.error('Error getting country information:', err);
+      }
+
+      await logLoginAttempt(username, password, ip, browser, "Success", country);
+      return res.status(200).json({ message: 'Login successful' });
+    });
   } catch (error) {
     console.error('Error processing login:', error);
     await logLoginAttempt(username, password, ip, browser, "Failed", "Unknown");
-    res.status(500).json({ error: 'Error processing login request' });
+    return res.status(500).json({ error: 'Error processing login request' });
   }
 });
 
