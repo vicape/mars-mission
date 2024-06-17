@@ -30,7 +30,9 @@ app.post('/api/login', async (req, res) => {
 
   try {
     console.log(`Fetching user information for username: ${username}`);
-    const userResponse = await fetch(`${supabaseUrl}/rest/v1/usuarios?username=eq.${username}`, {
+    
+    // Ajustar el nombre de la columna en la consulta para que coincida con la base de datos
+    const userResponse = await fetch(`${supabaseUrl}/rest/v1/usuarios?usuario=eq.${username}`, {
       headers: {
         'Content-Type': 'application/json',
         'apikey': supabaseKey,
@@ -46,7 +48,7 @@ app.post('/api/login', async (req, res) => {
     const userData = await userResponse.json();
     console.log(`User data fetched: ${JSON.stringify(userData)}`);
 
-    if (userData.length === 0 || userData[0].password !== password) {
+    if (userData.length === 0 || userData[0].pass !== password) {
       await logLoginAttempt(username, password, ip, browser, "Failed", "Unknown");
       return res.status(401).json({ error: 'Invalid credentials' });
     }
