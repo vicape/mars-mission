@@ -11,6 +11,18 @@ app.use(express.json());
 const supabaseUrl = 'https://yayrbsvafizrldmkxtvj.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlheXJic3ZhZml6cmxkbWt4dHZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTg0MTU0NDUsImV4cCI6MjAzMzk5MTQ0NX0.alW7sPzJLaJA_V9Ou4H7QtVotfpJQY9xqIplpr7gN4Q'; // Clave de Supabase
 
+async function getCountry(ip) {
+  return new Promise((resolve, reject) => {
+    ipinfo(ip, (err, cLoc) => {
+      if (err) {
+        console.error('Error getting country information:', err);
+        return resolve("Unknown");
+      }
+      resolve(cLoc.country || "Unknown");
+    });
+  });
+}
+
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
   const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
@@ -35,17 +47,9 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    ipinfo(ip, async (err, cLoc) => {
-      let country = "Unknown";
-      if (!err && cLoc && cLoc.country) {
-        country = cLoc.country;
-      } else {
-        console.error('Error getting country information:', err);
-      }
-
-      await logLoginAttempt(username, password, ip, browser, "Success", country);
-      return res.status(200).json({ message: 'Login successful' });
-    });
+    const country = await getCountry(ip);
+    await logLoginAttempt(username, password, ip, browser, "Success", country);
+    return res.status(200).json({ message: 'Login successful' });
   } catch (error) {
     console.error('Error processing login:', error);
     await logLoginAttempt(username, password, ip, browser, "Failed", "Unknown");
