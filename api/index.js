@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { createClient } = require('@supabase/supabase-js');
+const fetch = require('node-fetch');
 const logLoginAttempt = require('./log');
 const ipinfo = require('ipinfo');
 
@@ -26,20 +26,23 @@ async function getCountry(ip) {
 async function loginUser(username, password) {
   console.log(`Fetching user information for username: ${username}`);
 
-  const supabase = createClient(supabaseUrl, supabaseKey);
+  const userResponse = await fetch(`${supabaseUrl}/rest/v1/usuarios?usuario=eq.${username}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': supabaseKey,
+      'Authorization': `Bearer ${supabaseKey}`
+    }
+  });
 
-  let { data: usuarios, error } = await supabase
-    .from('usuarios')
-    .select('*')
-    .eq('usuario', username);
-
-  if (error) {
-    throw new Error(`Error fetching user information: ${error.message}`);
+  if (!userResponse.ok) {
+    const errorText = await userResponse.text();
+    throw new Error(`Error fetching user information: ${errorText}`);
   }
 
-  console.log(`User data fetched: ${JSON.stringify(usuarios)}`);
+  const userData = await userResponse.json();
+  console.log(`User data fetched: ${JSON.stringify(userData)}`);
 
-  if (usuarios.length === 0 || usuarios[0].pass !== password) {
+  if (userData.length === 0 || userData[0].pass !== password) {
     return { success: false, message: 'Invalid credentials' };
   }
 
