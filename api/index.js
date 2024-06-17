@@ -8,8 +8,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const supabaseUrl = 'https://yayrbsvafizrldmkxtvj.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlheXJic3ZhZml6cmxkbWt4dHZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTg0MTU0NDUsImV4cCI6MjAzMzk5MTQ0NX0.alW7sPzJLaJA_V9Ou4H7QtVotfpJQY9xqIplpr7gN4Q'; // Clave de Supabase
+const supabaseUrl = process.env.SUPABASE_URL || 'https://yayrbsvafizrldmkxtvj.supabase.co';
+const supabaseKey = process.env.SUPABASE_KEY || 'your-supabase-key';
 
 async function getCountry(ip) {
   return new Promise((resolve, reject) => {
@@ -26,27 +26,35 @@ async function getCountry(ip) {
 async function loginUser(username, password) {
   console.log(`Fetching user information for username: ${username}`);
 
-  const userResponse = await fetch(`${supabaseUrl}/rest/v1/usuarios?usuario=eq.${username}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': supabaseKey,
-      'Authorization': `Bearer ${supabaseKey}`
+  try {
+    const userResponse = await fetch(`${supabaseUrl}/rest/v1/usuarios?usuario=eq.${username}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${supabaseKey}`
+      }
+    });
+
+    if (!userResponse.ok) {
+      const errorText = await userResponse.text();
+      console.error(`Error fetching user information: ${errorText}`);
+      throw new Error(`Error fetching user information: ${errorText}`);
     }
-  });
 
-  if (!userResponse.ok) {
-    const errorText = await userResponse.text();
-    throw new Error(`Error fetching user information: ${errorText}`);
+    const userData = await userResponse.json();
+    console.log(`User data fetched: ${JSON.stringify(userData)}`);
+
+    if (userData.length === 0 || userData[0].pass !== password) {
+      console.log('Invalid credentials');
+      return { success: false, message: 'Invalid credentials' };
+    }
+
+    return { success: true, message: 'Login successful' };
+
+  } catch (error) {
+    console.error('Error in loginUser:', error);
+    throw error;
   }
-
-  const userData = await userResponse.json();
-  console.log(`User data fetched: ${JSON.stringify(userData)}`);
-
-  if (userData.length === 0 || userData[0].pass !== password) {
-    return { success: false, message: 'Invalid credentials' };
-  }
-
-  return { success: true, message: 'Login successful' };
 }
 
 app.post('/api/login', async (req, res) => {
@@ -55,6 +63,8 @@ app.post('/api/login', async (req, res) => {
   const browser = req.headers['user-agent'];
 
   try {
+    console.log(`Login attempt by username: ${username}, IP: ${ip}, Browser: ${browser}`);
+    
     const country = await getCountry(ip);
     console.log(`Country fetched: ${country}`);
 
