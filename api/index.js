@@ -1,7 +1,11 @@
 const express = require('express');
+const cors = require('cors');
 const logLoginAttempt = require('./log');
 
 const app = express();
+app.use(cors({
+  origin: 'https://mars2024.000webhostapp.com'
+}));
 app.use(express.json());
 
 app.post('/api/login', async (req, res) => {
