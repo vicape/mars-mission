@@ -55,9 +55,10 @@ app.post('/api/login', async (req, res) => {
   const browser = req.headers['user-agent'];
 
   try {
-    const loginResult = await loginUser(username, password);
     const country = await getCountry(ip);
     console.log(`Country fetched: ${country}`);
+
+    const loginResult = await loginUser(username, password);
 
     await logLoginAttempt(username, password, ip, browser, loginResult.success ? "Success" : "Failed", country);
 
