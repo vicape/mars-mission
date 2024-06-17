@@ -17,27 +17,32 @@ app.post('/api/login', async (req, res) => {
   const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
   const browser = req.headers['user-agent'];
 
-  // Consulta a Supabase para verificar el usuario
-  const userResponse = await fetch(`${supabaseUrl}/rest/v1/usuarios?username=eq.${username}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': supabaseKey,
-      'Authorization': `Bearer ${supabaseKey}`
-    }
-  });
+  try {
+    // Consulta a Supabase para verificar el usuario
+    const userResponse = await fetch(`${supabaseUrl}/rest/v1/usuarios?username=eq.${username}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${supabaseKey}`
+      }
+    });
 
-  if (userResponse.ok) {
-    const userData = await userResponse.json();
-    if (userData.length > 0 && userData[0].password === password) {
-      await logLoginAttempt(username, ip, browser, "Success");
-      res.status(200).json({ message: 'Login successful' });
+    if (userResponse.ok) {
+      const userData = await userResponse.json();
+      if (userData.length > 0 && userData[0].password === password) {
+        await logLoginAttempt(username, ip, browser, "Success");
+        res.status(200).json({ message: 'Login successful' });
+      } else {
+        await logLoginAttempt(username, ip, browser, "Failed");
+        res.status(401).json({ error: 'Invalid credentials' });
+      }
     } else {
       await logLoginAttempt(username, ip, browser, "Failed");
-      res.status(401).json({ error: 'Invalid credentials' });
+      res.status(500).json({ error: 'Error fetching user information' });
     }
-  } else {
-    await logLoginAttempt(username, ip, browser, "Failed");
-    res.status(500).json({ error: 'Error fetching user information' });
+  } catch (error) {
+    console.error('Error processing login:', error);
+    res.status(500).json({ error: 'Error processing login request' });
   }
 });
 
