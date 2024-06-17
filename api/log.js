@@ -21,15 +21,19 @@ const logLoginAttempt = async (username, ip, browser, status) => {
       })
     });
 
-    if (!response.ok) {
+    if (response.ok) {
+      const text = await response.text();
+      if (text) {
+        const data = JSON.parse(text);
+        console.log('Data inserted successfully:', data);
+        return data;
+      } else {
+        throw new Error('Empty response body');
+      }
+    } else {
       const errorText = await response.text();
       throw new Error(`Fetch error: ${errorText}`);
     }
-
-    const data = await response.json();
-    console.log('Data inserted successfully:', data);
-    return data;
-
   } catch (error) {
     console.error('Fetch error:', error);
     throw error;

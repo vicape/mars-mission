@@ -18,7 +18,6 @@ app.post('/api/login', async (req, res) => {
   const browser = req.headers['user-agent'];
 
   try {
-    // Consulta a Supabase para verificar el usuario
     const userResponse = await fetch(`${supabaseUrl}/rest/v1/usuarios?username=eq.${username}`, {
       headers: {
         'Content-Type': 'application/json',
