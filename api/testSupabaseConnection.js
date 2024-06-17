@@ -1,9 +1,12 @@
+// Importa el módulo 'createClient' de '@supabase/supabase-js' para interactuar con Supabase.
 const { createClient } = require('@supabase/supabase-js');
 
+// URL y clave pública del proyecto Supabase.
 const supabaseUrl = 'https://yayrbsvafizrldmkxtvj.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlheXJic3ZhZml6cmxkbWt4dHZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTg0MTU0NDUsImV4cCI6MjAzMzk5MTQ0NX0.alW7sPzJLaJA_V9Ou4H7QtVotfpJQY9xqIplpr7gN4Q';
+const supabaseKey = 'tu_clave_publica_aqui';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// Función para probar la conexión a Supabase insertando un registro en la tabla 'log'.
 const testSupabaseConnection = async () => {
   const { data, error } = await supabase
     .from('log')
@@ -16,4 +19,5 @@ const testSupabaseConnection = async () => {
   }
 };
 
+// Ejecuta la función para probar la conexión.
 testSupabaseConnection();
