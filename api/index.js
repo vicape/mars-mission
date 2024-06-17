@@ -23,41 +23,49 @@ async function getCountry(ip) {
   });
 }
 
+async function loginUser(username, password) {
+  console.log(`Fetching user information for username: ${username}`);
+
+  const userResponse = await fetch(`${supabaseUrl}/rest/v1/usuarios?usuario=eq.${username}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': supabaseKey,
+      'Authorization': `Bearer ${supabaseKey}`
+    }
+  });
+
+  if (!userResponse.ok) {
+    const errorText = await userResponse.text();
+    throw new Error(`Error fetching user information: ${errorText}`);
+  }
+
+  const userData = await userResponse.json();
+  console.log(`User data fetched: ${JSON.stringify(userData)}`);
+
+  if (userData.length === 0 || userData[0].pass !== password) {
+    return { success: false, message: 'Invalid credentials' };
+  }
+
+  return { success: true, message: 'Login successful' };
+}
+
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
   const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
   const browser = req.headers['user-agent'];
 
   try {
-    console.log(`Fetching user information for username: ${username}`);
-    
-    // Ajustar el nombre de la columna en la consulta para que coincida con la base de datos
-    const userResponse = await fetch(`${supabaseUrl}/rest/v1/usuarios?usuario=eq.${username}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': supabaseKey,
-        'Authorization': `Bearer ${supabaseKey}`
-      }
-    });
-
-    if (!userResponse.ok) {
-      const errorText = await userResponse.text();
-      throw new Error(`Error fetching user information: ${errorText}`);
-    }
-
-    const userData = await userResponse.json();
-    console.log(`User data fetched: ${JSON.stringify(userData)}`);
-
-    if (userData.length === 0 || userData[0].pass !== password) {
-      await logLoginAttempt(username, password, ip, browser, "Failed", "Unknown");
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
+    const loginResult = await loginUser(username, password);
     const country = await getCountry(ip);
     console.log(`Country fetched: ${country}`);
 
-    await logLoginAttempt(username, password, ip, browser, "Success", country);
-    return res.status(200).json({ message: 'Login successful' });
+    await logLoginAttempt(username, password, ip, browser, loginResult.success ? "Success" : "Failed", country);
+
+    if (!loginResult.success) {
+      return res.status(401).json({ error: loginResult.message });
+    }
+
+    return res.status(200).json({ message: loginResult.message });
   } catch (error) {
     console.error('Error processing login:', error.message);
     await logLoginAttempt(username, password, ip, browser, "Failed", "Unknown");
