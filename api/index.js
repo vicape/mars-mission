@@ -26,23 +26,20 @@ async function getCountry(ip) {
 async function loginUser(username, password) {
   console.log(`Fetching user information for username: ${username}`);
 
-  const userResponse = await fetch(`${supabaseUrl}/rest/v1/usuarios?usuario=eq.${username}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': supabaseKey,
-      'Authorization': `Bearer ${supabaseKey}`
-    }
-  });
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
-  if (!userResponse.ok) {
-    const errorText = await userResponse.text();
-    throw new Error(`Error fetching user information: ${errorText}`);
+  let { data: usuarios, error } = await supabase
+    .from('usuarios')
+    .select('*')
+    .eq('usuario', username);
+
+  if (error) {
+    throw new Error(`Error fetching user information: ${error.message}`);
   }
 
-  const userData = await userResponse.json();
-  console.log(`User data fetched: ${JSON.stringify(userData)}`);
+  console.log(`User data fetched: ${JSON.stringify(usuarios)}`);
 
-  if (userData.length === 0 || userData[0].pass !== password) {
+  if (usuarios.length === 0 || usuarios[0].pass !== password) {
     return { success: false, message: 'Invalid credentials' };
   }
 
@@ -59,7 +56,6 @@ app.post('/api/login', async (req, res) => {
     console.log(`Country fetched: ${country}`);
 
     const loginResult = await loginUser(username, password);
-
     await logLoginAttempt(username, password, ip, browser, loginResult.success ? "Success" : "Failed", country);
 
     if (!loginResult.success) {
@@ -69,7 +65,6 @@ app.post('/api/login', async (req, res) => {
     return res.status(200).json({ message: loginResult.message });
   } catch (error) {
     console.error('Error processing login:', error.message);
-    await logLoginAttempt(username, password, ip, browser, "Failed", "Unknown");
     return res.status(500).json({ error: 'Error processing login request' });
   }
 });
