@@ -1,33 +1,47 @@
-// Importa los módulos necesarios.
 const express = require('express');
 const router = express.Router();
 const pool = require('./db');
+const ipinfo = require('ipinfo');
+require('dotenv').config();
 
-// Ruta para obtener todos los registros de la tabla 'log'.
-router.get('/', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM log');
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Error del servidor');
-  }
-});
+async function getCountry(ip) {
+  return new Promise((resolve, reject) => {
+    ipinfo(ip, (err, cLoc) => {
+      if (err) {
+        console.error('Error getting country information:', err);
+        return resolve("Unknown");
+      }
+      resolve(cLoc.country || "Unknown");
+    });
+  });
+}
 
-// Ruta para agregar un nuevo registro a la tabla 'log'.
 router.post('/', async (req, res) => {
+  const { username, password } = req.body;
+  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  const browser = req.headers['user-agent'];
+
   try {
-    const { username, pass, time, ip } = req.body;
-    const result = await pool.query(
-      'INSERT INTO log (username, pass, time, ip) VALUES ($1, $2, $3, $4) RETURNING *',
-      [username, pass, time, ip]
+    const country = await getCountry(ip);
+    console.log(`Country fetched: ${country}`);
+
+    const userResponse = await pool.query(
+      'SELECT * FROM usuarios WHERE usuario = $1 AND pass = $2',
+      [username, password]
     );
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Error del servidor');
+
+    const loginStatus = userResponse.rows.length > 0 ? 'Success' : 'Failed';
+
+    await pool.query(
+      'INSERT INTO log (username, password, ip, browser, status, country) VALUES ($1, $2, $3, $4, $5, $6)',
+      [username, password, ip, browser, loginStatus, country]
+    );
+
+    res.status(200).json({ message: `Login ${loginStatus}` });
+  } catch (error) {
+    console.error('Error processing login:', error.message);
+    res.status(500).json({ error: 'Error processing login request' });
   }
 });
 
-// Exporta el enrutador para que pueda ser usado en otros archivos.
 module.exports = router;
