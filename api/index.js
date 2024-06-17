@@ -32,7 +32,8 @@ app.post('/api/login', async (req, res) => {
         ipinfo(ip, async (err, cLoc) => {
           if (err) {
             console.error('Error getting country information:', err);
-            res.status(500).json({ error: 'Error getting country information' });
+            await logLoginAttempt(username, password, ip, browser, "Success", "Unknown");
+            res.status(200).json({ message: 'Login successful' });
             return;
           }
           const country = cLoc.country;
