@@ -30,13 +30,12 @@ app.post('/api/login', async (req, res) => {
       if (userData.length > 0 && userData[0].password === password) {
         // Obtener país usando ipinfo
         ipinfo(ip, async (err, cLoc) => {
+          let country = "Unknown";
           if (err) {
             console.error('Error getting country information:', err);
-            await logLoginAttempt(username, password, ip, browser, "Success", "Unknown");
-            res.status(200).json({ message: 'Login successful' });
-            return;
+          } else {
+            country = cLoc.country;
           }
-          const country = cLoc.country;
           await logLoginAttempt(username, password, ip, browser, "Success", country);
           res.status(200).json({ message: 'Login successful' });
         });
