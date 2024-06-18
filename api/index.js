@@ -3,7 +3,7 @@ const cors = require('cors');
 const fetch = require('node-fetch');
 const logLoginAttempt = require('./log');
 const ipinfo = require('ipinfo');
-const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config();
 
 const app = express();
 app.use(cors());
@@ -11,7 +11,6 @@ app.use(express.json());
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function getCountry(ip) {
   return new Promise((resolve, reject) => {
