@@ -1,26 +1,19 @@
 const { createClient } = require('@supabase/supabase-js');
-require('dotenv').config();
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
-async function logLoginAttempt(username, pass, ip, browser, status, country) {
+async function logLoginAttempt(username, password, ip, browser, status, country) {
+  const time = new Date().toISOString();  // Obtener la fecha y hora actuales en formato ISO
+
   try {
     const { data, error } = await supabase
       .from('log')
-      .insert([
-        {
-          username,
-          pass,
-          ip,
-          browser,
-          status,
-          country
-        }
-      ]);
-    
-    if (error) throw error;
+      .insert([{ username, pass: password, time, ip, browser, status, country }]);
+
+    if (error) {
+      throw error;
+    }
+
     console.log('Log inserted successfully:', data);
   } catch (error) {
     console.error('Error logging login attempt:', error.message);
