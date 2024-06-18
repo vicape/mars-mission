@@ -1,79 +1,47 @@
 const express = require('express');
+const bodyParser = require('body-parser');
 const cors = require('cors');
-const fetch = require('node-fetch');
+const { createClient } = require('@supabase/supabase-js');
+const dotenv = require('dotenv');
 const logLoginAttempt = require('./log');
-const ipinfo = require('ipinfo');
-require('dotenv').config();
+
+dotenv.config();
 
 const app = express();
+app.use(bodyParser.json());
 app.use(cors());
-app.use(express.json());
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
-
-async function getCountry(ip) {
-  return new Promise((resolve, reject) => {
-    ipinfo(ip, (err, cLoc) => {
-      if (err) {
-        console.error('Error getting country information:', err);
-        return resolve("Unknown");
-      }
-      resolve(cLoc.country || "Unknown");
-    });
-  });
-}
-
-async function loginUser(username, password) {
-  console.log(`Fetching user information for username: ${username}`);
-
-  const userResponse = await fetch(`${supabaseUrl}/rest/v1/usuarios?usuario=eq.${username}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': supabaseKey,
-      'Authorization': `Bearer ${supabaseKey}`
-    }
-  });
-
-  if (!userResponse.ok) {
-    const errorText = await userResponse.text();
-    throw new Error(`Error fetching user information: ${errorText}`);
-  }
-
-  const userData = await userResponse.json();
-  console.log(`User data fetched: ${JSON.stringify(userData)}`);
-
-  if (userData.length === 0 || userData[0].pass !== password) {
-    return { success: false, message: 'Invalid credentials' };
-  }
-
-  return { success: true, message: 'Login successful' };
-}
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
-  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-  const browser = req.headers['user-agent'];
 
   try {
-    const country = await getCountry(ip);
-    console.log(`Country fetched: ${country}`);
+    const { data, error } = await supabase
+      .from('log')
+      .select('*')
+      .eq('username', username)
+      .eq('pass', password); // Cambié de 'password' a 'pass' basado en la estructura de tu tabla
 
-    const loginResult = await loginUser(username, password);
-    await logLoginAttempt(username, password, ip, browser, loginResult.success ? "Success" : "Failed", country);
-
-    if (!loginResult.success) {
-      return res.status(401).json({ error: loginResult.message });
+    if (error) {
+      throw error;
     }
 
-    return res.status(200).json({ message: loginResult.message });
+    if (data.length > 0) {
+      await logLoginAttempt(username, password, req.ip, req.headers['user-agent'], 'Success');
+      res.json({ message: 'Login successful' });
+    } else {
+      await logLoginAttempt(username, password, req.ip, req.headers['user-agent'], 'Failed');
+      res.status(401).json({ message: 'Invalid credentials' });
+    }
   } catch (error) {
-    console.error('Error processing login:', error.message);
-    return res.status(500).json({ error: 'Error processing login request' });
+    console.error('Error:', error);
+    await logLoginAttempt(username, password, req.ip, req.headers['user-agent'], 'Error');
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
