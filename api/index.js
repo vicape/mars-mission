@@ -1,11 +1,11 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const { createClient } = require('@supabase/supabase-js');
-const dotenv = require('dotenv');
+const axios = require('axios');
 const logLoginAttempt = require('./log');
+const { createClient } = require('@supabase/supabase-js');
 
-dotenv.config();
+require('dotenv').config();
 
 const app = express();
 app.use(bodyParser.json());
@@ -15,33 +15,38 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY
 
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
+  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  let country = '';
+
+  try {
+    const response = await axios.get(`https://ipinfo.io/${ip}/json?token=YOUR_IPINFO_TOKEN`);
+    country = response.data.country;
+  } catch (error) {
+    console.error('Error fetching country:', error.message);
+  }
 
   try {
     const { data, error } = await supabase
-      .from('log')
-      .select('*')
-      .eq('username', username)
-      .eq('pass', password); // Cambié de 'password' a 'pass' basado en la estructura de tu tabla
+      .from('usuarios')
+      .select('id')
+      .eq('usuario', username)
+      .eq('pass', password)
+      .single();
 
-    if (error) {
-      throw error;
+    if (error || !data) {
+      await logLoginAttempt(username, password, ip, req.headers['user-agent'], 'Failed', country);
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    if (data.length > 0) {
-      await logLoginAttempt(username, password, req.ip, req.headers['user-agent'], 'Success');
-      res.json({ message: 'Login successful' });
-    } else {
-      await logLoginAttempt(username, password, req.ip, req.headers['user-agent'], 'Failed');
-      res.status(401).json({ message: 'Invalid credentials' });
-    }
+    await logLoginAttempt(username, password, ip, req.headers['user-agent'], 'Success', country);
+    res.json({ message: 'Login successful' });
   } catch (error) {
-    console.error('Error:', error);
-    await logLoginAttempt(username, password, req.ip, req.headers['user-agent'], 'Error');
+    console.error('Error during login:', error.message);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
