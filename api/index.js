@@ -16,11 +16,11 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
   const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-  let country = '';
+  let country = 'EMPTY';
 
   try {
-    const response = await axios.get(`https://ipinfo.io/${ip}/json?token=YOUR_IPINFO_TOKEN`);
-    country = response.data.country;
+    const response = await axios.get(`http://ip-api.com/json/${ip}`);
+    country = response.data.country || 'EMPTY';
   } catch (error) {
     console.error('Error fetching country:', error.message);
   }
