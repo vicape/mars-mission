@@ -17,6 +17,11 @@ app.use(cookieParser());
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 const secretKey = process.env.JWT_SECRET_KEY; // Asegúrate de tener esta variable en tu archivo .env
 
+if (!secretKey) {
+  console.error('JWT_SECRET_KEY is not defined in the environment variables');
+  process.exit(1); // Detiene la aplicación si no se encuentra la clave secreta
+}
+
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
   const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
@@ -32,21 +37,35 @@ app.post('/api/login', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('usuarios')
-      .select('id')
+      .select('id, team, school')
       .eq('usuario', username)
       .eq('pass', password)
       .single();
 
-    if (error || !data) {
+    if (error) {
+      console.error('Error fetching user from database:', error.message);
+      await logLoginAttempt(username, password, ip, req.headers['user-agent'], 'Failed', country);
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    if (!data) {
+      console.log('User not found or invalid credentials');
       await logLoginAttempt(username, password, ip, req.headers['user-agent'], 'Failed', country);
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     await logLoginAttempt(username, password, ip, req.headers['user-agent'], 'Success', country);
 
-    const token = jwt.sign({ username }, secretKey, { expiresIn: '1h' });
+    const token = jwt.sign({ username, team: data.team, school: data.school }, secretKey, { expiresIn: '1h' });
     res.cookie('token', token, { httpOnly: true, secure: true });
-    res.json({ message: 'Login successful' });
+    res.json({
+      message: 'Login successful',
+      user: {
+        username,
+        team: data.team,
+        school: data.school
+      }
+    });
   } catch (error) {
     console.error('Error during login:', error.message);
     res.status(500).json({ message: 'Internal server error' });
@@ -65,11 +84,11 @@ const authMiddleware = (req, res, next) => {
 };
 
 app.get('/api/secure-data', authMiddleware, (req, res) => {
-  res.json({ message: 'This is secure data' });
+  res.json({ message: 'This is secure data', user: req.user });
 });
 
 app.get('/api/verify-token', authMiddleware, (req, res) => {
-  res.json({ message: 'Authenticated' });
+  res.json({ message: 'Authenticated', user: req.user });
 });
 
 const PORT = process.env.PORT || 3000;
