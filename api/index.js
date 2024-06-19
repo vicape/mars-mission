@@ -68,4 +68,11 @@ app.get('/api/secure-data', authMiddleware, (req, res) => {
   res.json({ message: 'This is secure data' });
 });
 
-app.get('/api/verify-token', authM
+app.get('/api/verify-token', authMiddleware, (req, res) => {
+  res.json({ message: 'Authenticated' });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
