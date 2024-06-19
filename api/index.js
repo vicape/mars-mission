@@ -4,14 +4,18 @@ const cors = require('cors');
 const axios = require('axios');
 const logLoginAttempt = require('./log');
 const { createClient } = require('@supabase/supabase-js');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 
 require('dotenv').config();
 
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
+app.use(cookieParser());
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+const secretKey = process.env.JWT_SECRET_KEY; // Asegúrate de tener esta variable en tu archivo .env
 
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
@@ -39,6 +43,9 @@ app.post('/api/login', async (req, res) => {
     }
 
     await logLoginAttempt(username, password, ip, req.headers['user-agent'], 'Success', country);
+
+    const token = jwt.sign({ username }, secretKey, { expiresIn: '1h' });
+    res.cookie('token', token, { httpOnly: true, secure: true });
     res.json({ message: 'Login successful' });
   } catch (error) {
     console.error('Error during login:', error.message);
@@ -46,7 +53,19 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+const authMiddleware = (req, res, next) => {
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ message: 'Unauthorized' });
+
+  jwt.verify(token, secretKey, (err, decoded) => {
+    if (err) return res.status(401).json({ message: 'Unauthorized' });
+    req.user = decoded;
+    next();
+  });
+};
+
+app.get('/api/secure-data', authMiddleware, (req, res) => {
+  res.json({ message: 'This is secure data' });
 });
+
+app.get('/api/verify-token', authM
