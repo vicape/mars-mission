@@ -27,7 +27,7 @@ router.get('/fecha-inicio', async (req, res) => {
     const sign = diffSeconds < 0 ? '-' : '+';
 
     res.json({ 
-      diff: `${sign}${days} : ${hours.toString().padStart(2, '0')} : ${minutes.toString().padStart(2, '0')} : ${seconds.toString().padStart(2, '0')}`
+      mission_clock: `${sign}${days} : ${hours.toString().padStart(2, '0')} : ${minutes.toString().padStart(2, '0')} : ${seconds.toString().padStart(2, '0')}`
     });
   } catch (error) {
     console.error('Error fetching fecha_inicio:', error.message);
