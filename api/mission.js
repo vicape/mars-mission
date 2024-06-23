@@ -17,13 +17,17 @@ router.get('/fecha-inicio', async (req, res) => {
     }
 
     const diffSeconds = result.rows[0].diff_seconds;
-    const days = Math.floor(diffSeconds / (24 * 3600));
-    const hours = Math.floor((diffSeconds % (24 * 3600)) / 3600);
-    const minutes = Math.floor((diffSeconds % 3600) / 60);
-    const seconds = Math.floor(diffSeconds % 60);
+    const absDiffSeconds = Math.abs(diffSeconds);
+
+    const days = Math.floor(absDiffSeconds / (24 * 3600));
+    const hours = Math.floor((absDiffSeconds % (24 * 3600)) / 3600);
+    const minutes = Math.floor((absDiffSeconds % 3600) / 60);
+    const seconds = Math.floor(absDiffSeconds % 60);
+
+    const sign = diffSeconds < 0 ? '-' : '+';
 
     res.json({ 
-      diff: `${days} días: ${hours} horas: ${minutes} minutos: ${seconds} segundos`
+      diff: `${sign}${days} : ${hours.toString().padStart(2, '0')} : ${minutes.toString().padStart(2, '0')} : ${seconds.toString().padStart(2, '0')}`
     });
   } catch (error) {
     console.error('Error fetching fecha_inicio:', error.message);
