@@ -1,3 +1,4 @@
+// api/index.js
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -6,6 +7,7 @@ const logLoginAttempt = require('./log');
 const { createClient } = require('@supabase/supabase-js');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
+const missionRoutes = require('./mission');  // Añadido para incluir las rutas de mission
 
 require('dotenv').config();
 
@@ -82,6 +84,8 @@ const authMiddleware = (req, res, next) => {
     next();
   });
 };
+
+app.use('/api/mission', missionRoutes);  // Añadido para usar las rutas de mission
 
 app.get('/api/secure-data', authMiddleware, (req, res) => {
   res.json({ message: 'This is secure data', user: req.user });
