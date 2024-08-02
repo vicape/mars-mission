@@ -32,8 +32,17 @@ router.post('/chat', async (req, res) => {
         });
 
         if (!response.ok) {
-            const errorInfo = await response.text(); // Obtener el texto completo de la respuesta de error
-            throw new Error(`OpenAI API responded with status: ${response.status}, body was: ${errorInfo}`);
+            const errorInfo = await response.json(); // Obtener el texto completo de la respuesta de error
+
+            // Manejo específico del error de cuota insuficiente
+            if (response.status === 429 && errorInfo.error.code === 'insufficient_quota') {
+                console.error('Se ha excedido la cuota de la API de OpenAI:', errorInfo.error.message);
+                return res.status(429).json({
+                    error: 'Se ha excedido la cuota de la API de OpenAI. Por favor, intente más tarde o revise su plan de facturación.'
+                });
+            }
+
+            throw new Error(`OpenAI API responded with status: ${response.status}, body was: ${JSON.stringify(errorInfo)}`);
         }
 
         const result = await response.json();
