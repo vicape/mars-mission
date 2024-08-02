@@ -20,7 +20,7 @@ router.post('/chat', async (req, res) => {
     };
 
     try {
-        const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+        const fetch = (await import('node-fetch')).default;  // Import dinámico de node-fetch
         const response = await fetch(url, {
             method: 'POST',
             headers: {
