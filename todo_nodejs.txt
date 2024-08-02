@@ -32,6 +32,7 @@ module.exports = pool;
 
 
 <!-- api\index.js -->
+// api/index.js
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -40,6 +41,7 @@ const logLoginAttempt = require('./log');
 const { createClient } = require('@supabase/supabase-js');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
+const missionRoutes = require('./mission');  // Añadido para incluir las rutas de mission
 
 require('dotenv').config();
 
@@ -117,6 +119,8 @@ const authMiddleware = (req, res, next) => {
   });
 };
 
+app.use('/api/mission', missionRoutes);  // Añadido para usar las rutas de mission
+
 app.get('/api/secure-data', authMiddleware, (req, res) => {
   res.json({ message: 'This is secure data', user: req.user });
 });
@@ -155,6 +159,47 @@ async function logLoginAttempt(username, password, ip, browser, status, country)
 }
 
 module.exports = logLoginAttempt;
+
+
+<!-- api\mission.js -->
+// api/mission.js
+const express = require('express');
+const pool = require('./db');
+
+const router = express.Router();
+
+router.get('/fecha-inicio', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT EXTRACT(EPOCH FROM (NOW() - fecha_inicio)) AS diff_seconds
+      FROM mission
+      WHERE id = $1
+    `, [1]); // Asumiendo que quieres el registro con id = 1
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Mission not found' });
+    }
+
+    const diffSeconds = result.rows[0].diff_seconds;
+    const absDiffSeconds = Math.abs(diffSeconds);
+
+    const days = Math.floor(absDiffSeconds / (24 * 3600));
+    const hours = Math.floor((absDiffSeconds % (24 * 3600)) / 3600);
+    const minutes = Math.floor((absDiffSeconds % 3600) / 60);
+    const seconds = Math.floor(absDiffSeconds % 60);
+
+    const sign = diffSeconds < 0 ? '-' : '+';
+
+    res.json({ 
+      mission_clock: `${sign}${days} : ${hours.toString().padStart(2, '0')} : ${minutes.toString().padStart(2, '0')} : ${seconds.toString().padStart(2, '0')}`
+    });
+  } catch (error) {
+    console.error('Error fetching fecha_inicio:', error.message);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+module.exports = router;
 
 
 <!-- api\testSupabaseConnection.js -->
@@ -304,7 +349,7 @@ const writeToFile = (fileList) => {
 writeToFile(fileList);
 
 
-<!-- git.bat -->
+<!-- git -->
 @echo off
 
 REM Añadir todos los cambios

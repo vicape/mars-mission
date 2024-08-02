@@ -7,7 +7,8 @@ const logLoginAttempt = require('./log');
 const { createClient } = require('@supabase/supabase-js');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
-const missionRoutes = require('./mission');  // Añadido para incluir las rutas de mission
+const missionRoutes = require('./mission');  // Rutas para las misiones
+const aiRoutes = require('./ai');  // Añadido para incluir las rutas de OpenAI
 
 require('dotenv').config();
 
@@ -85,7 +86,9 @@ const authMiddleware = (req, res, next) => {
   });
 };
 
-app.use('/api/mission', missionRoutes);  // Añadido para usar las rutas de mission
+// Añadir nuevas rutas
+app.use('/api/mission', missionRoutes);
+app.use('/api/ai', aiRoutes);  // Usar las rutas de AI
 
 app.get('/api/secure-data', authMiddleware, (req, res) => {
   res.json({ message: 'This is secure data', user: req.user });
