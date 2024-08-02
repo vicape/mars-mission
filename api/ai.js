@@ -1,24 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const fs = require('fs');
-const pdf = require('pdf-parse');
-const fetch = require('node-fetch');
 
 // Cargar la clave API de OpenAI desde las variables de entorno
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-
-// Función para extraer texto de un PDF
-async function extractTextFromPDF(pdfPath) {
-    const dataBuffer = fs.readFileSync(pdfPath);
-    const data = await pdf(dataBuffer);
-    return data.text;
-}
-
-// Almacenar el texto extraído del PDF en una variable
-let marsInformation = '';
-extractTextFromPDF('path_to_your_pdf.pdf').then(text => {
-    marsInformation = text; // Almacena el texto para uso posterior
-});
 
 router.post('/chat', async (req, res) => {
     const { prompt } = req.body;
@@ -28,14 +12,16 @@ router.post('/chat', async (req, res) => {
 
     const url = 'https://api.openai.com/v1/chat/completions';
     const data = {
-        model: "gpt-3.5-turbo",
+        model: "gpt-3.5-turbo",  // Asegúrate de usar un modelo disponible
         messages: [
-            { role: 'system', content: 'Soy un asistente especializado en viajes a Marte.' + marsInformation },
+            { role: 'system', content: 'Eres un asistente especializado en informar y educar sobre viajes y exploración en Marte. Responde solo con información relacionada con Marte.' },
             { role: 'user', content: prompt }
         ]
     };
 
     try {
+        // Importación dinámica de node-fetch para ES Modules
+        const fetch = (await import('node-fetch')).default;
         const response = await fetch(url, {
             method: 'POST',
             headers: {
