@@ -1,11 +1,21 @@
 const express = require('express');
 const router = express.Router();
+const fetch = require('node-fetch');
+const pdf = require('pdf-parse');
 
 // Cargar la clave API de OpenAI desde las variables de entorno
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-// Palabras clave para determinar si el prompt es relevante para Marte
-const marsKeywords = ['marte', 'viaje a marte', 'colonización de marte', 'exploración de marte', 'misiones a marte'];
+// Función para descargar y extraer texto de un PDF desde un URL
+async function extractTextFromPDF(pdfUrl) {
+    const response = await fetch(pdfUrl);
+    const dataBuffer = await response.buffer();
+    const data = await pdf(dataBuffer);
+    return data.text;
+}
+
+// URL del PDF en el almacenamiento en la nube
+const pdfUrl = 'https://your-cloud-storage.com/path_to_your_pdf.pdf';
 
 router.post('/chat', async (req, res) => {
     const { prompt } = req.body;
@@ -13,24 +23,18 @@ router.post('/chat', async (req, res) => {
         return res.status(400).json({ error: 'No prompt provided' });
     }
 
-    // Verificar si el prompt incluye palabras clave relacionadas con Marte
-    const isAboutMars = marsKeywords.some(keyword => prompt.toLowerCase().includes(keyword));
-
-    if (!isAboutMars) {
-        return res.status(403).json({ error: 'This service only provides information about Mars.' });
-    }
-
-    const url = 'https://api.openai.com/v1/chat/completions';
-    const data = {
-        model: "gpt-3.5-turbo",  // Asegúrate de usar un modelo disponible
-        messages: [
-            { role: 'system', content: 'Soy un asistente especializado en viajes a Marte.' },
-            { role: 'user', content: prompt }
-        ]
-    };
-
     try {
-        const fetch = (await import('node-fetch')).default;
+        const marsInformation = await extractTextFromPDF(pdfUrl);
+
+        const url = 'https://api.openai.com/v1/chat/completions';
+        const data = {
+            model: "gpt-3.5-turbo",  // Asegúrate de usar un modelo disponible
+            messages: [
+                { role: 'system', content: marsInformation }, // Agrega información extraída del PDF
+                { role: 'user', content: prompt }
+            ]
+        };
+
         const response = await fetch(url, {
             method: 'POST',
             headers: {
