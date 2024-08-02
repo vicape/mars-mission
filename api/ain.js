@@ -12,7 +12,7 @@ router.post('/chat', async (req, res) => {
 
     const url = 'https://api.openai.com/v1/chat/completions';
     const data = {
-        model: "gpt-3.5-turbo",
+        model: "gpt-4o-mini",
         messages: [
             { role: 'system', content: 'Eres un asistente especializado en viajes espaciales.' },
             { role: 'user', content: prompt }
