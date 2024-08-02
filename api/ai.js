@@ -1,35 +1,32 @@
 const express = require('express');
-const router = express.Router(); 
-
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const router = express.Router();
 
 // Cargar la clave API de OpenAI desde las variables de entorno
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const ASSISTANT_ID = 'asst_q76Jk0ulOlGSW2eNcGuOnhaZ';  // El ID de tu asistente
 
 router.post('/chat', async (req, res) => {
-    const { prompt } = req.body;
-    if (!prompt) {
-        return res.status(400).json({ error: 'No prompt provided' });
+    const { message } = req.body;
+    if (!message) {
+        return res.status(400).json({ error: 'No message provided' });
     }
 
-    const url = 'https://api.openai.com/v1/chat/completions';
-    const data = {
-        model: "gpt-3.5-turbo",  // Asegúrate de usar un modelo disponible
-        messages: [
-            { role: 'system', content: 'Eres un asistente especializado en informar y educar sobre viajes y exploración en Marte. Responde solo con información relacionada con Marte.' },
-            { role: 'user', content: prompt }
-        ]
-    };
+    const url = `https://api.openai.com/v1/assistants/${ASSISTANT_ID}/messages`;
 
     try {
-        // Importación dinámica de node-fetch para ES Modules
-        const fetch = (await import('node-fetch')).default;
         const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${OPENAI_API_KEY}`
             },
-            body: JSON.stringify(data)
+            body: JSON.stringify({
+                messages: [{
+                    role: 'user',
+                    content: message
+                }]
+            })
         });
 
         if (!response.ok) {
@@ -38,7 +35,7 @@ router.post('/chat', async (req, res) => {
         }
 
         const result = await response.json();
-        res.json(result.choices[0].message.content);
+        res.json(result);  // Aquí puedes decidir cómo quieres que se envíe la respuesta al cliente
     } catch (error) {
         console.error('Error interacting with OpenAI API:', error);
         res.status(500).json({ error: error.message || 'Error processing request' });
