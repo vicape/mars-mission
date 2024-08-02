@@ -1,5 +1,6 @@
 const express = require('express');
-const router = express.Router();
+const router = express.Router(); 
+
 
 // Cargar la clave API de OpenAI desde las variables de entorno
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
