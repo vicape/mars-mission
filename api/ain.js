@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-// Asegúrate de tener tu clave API de OpenAI en tu archivo .env
+// Cargar la clave API de OpenAI desde las variables de entorno
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 router.post('/chat', async (req, res) => {
@@ -12,7 +12,7 @@ router.post('/chat', async (req, res) => {
 
     const url = 'https://api.openai.com/v1/chat/completions';
     const data = {
-        model: "gpt-4o-mini",
+        model: "gpt-3.5-turbo",  // Asegúrate de usar un modelo disponible
         messages: [
             { role: 'system', content: 'Eres un asistente especializado en viajes espaciales.' },
             { role: 'user', content: prompt }
@@ -20,7 +20,8 @@ router.post('/chat', async (req, res) => {
     };
 
     try {
-        const fetch = (await import('node-fetch')).default;  // Import dinámico de node-fetch
+        // Importación dinámica de node-fetch para ES Modules
+        const fetch = (await import('node-fetch')).default;
         const response = await fetch(url, {
             method: 'POST',
             headers: {
@@ -31,7 +32,7 @@ router.post('/chat', async (req, res) => {
         });
 
         if (!response.ok) {
-            const errorInfo = await response.text(); // or response.json() if response is in JSON format
+            const errorInfo = await response.text(); // Obtener el texto completo de la respuesta de error
             throw new Error(`OpenAI API responded with status: ${response.status}, body was: ${errorInfo}`);
         }
 
