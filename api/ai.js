@@ -1,5 +1,6 @@
 const express = require('express');
-const router = express.Router(); 
+const router = express.Router();
+const fetch = require('node-fetch'); // Asegúrate de tener 'node-fetch' en tus dependencias
 
 // Cargar la clave API de OpenAI desde las variables de entorno
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -10,18 +11,17 @@ router.post('/chat', async (req, res) => {
         return res.status(400).json({ error: 'No prompt provided' });
     }
 
-    const url = 'https://api.openai.com/v1/chat/completions';
+    const url = `https://api.openai.com/v1/assistants/asst_q76Jk0ulOIGSW2eNcGuOnhaZ/messages`;
     const data = {
-        model: "gpt-3.5-turbo",  // Asegúrate de usar un modelo disponible
-        messages: [
-            { role: 'system', content: 'Eres un asistente especializado en informar y educar sobre viajes y exploración en Marte. Responde solo con información relacionada con Marte.' },
-            { role: 'user', content: prompt }
-        ]
+        model: "gpt-3.5-turbo", // Asegúrate de que el modelo coincide con el disponible para tu asistente
+        inputs: {
+            messages: [
+                { role: 'user', content: prompt }
+            ]
+        }
     };
 
     try {
-        // Importación dinámica de node-fetch para ES Modules
-        const fetch = (await import('node-fetch')).default;
         const response = await fetch(url, {
             method: 'POST',
             headers: {
