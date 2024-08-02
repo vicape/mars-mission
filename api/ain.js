@@ -1,5 +1,5 @@
 const express = require('express');
-const fetch = require('node-fetch');
+//const fetch = require('node-fetch');
 const router = express.Router();
 
 // Asegúrate de tener tu clave API de OpenAI en tu archivo .env
