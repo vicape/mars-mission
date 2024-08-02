@@ -1,5 +1,4 @@
 const express = require('express');
-//const fetch = require('node-fetch');
 const router = express.Router();
 
 // Asegúrate de tener tu clave API de OpenAI en tu archivo .env
@@ -21,6 +20,7 @@ router.post('/chat', async (req, res) => {
     };
 
     try {
+        const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
         const response = await fetch(url, {
             method: 'POST',
             headers: {
