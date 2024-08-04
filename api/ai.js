@@ -11,7 +11,7 @@ router.post('/chat', async (req, res) => {
     }
 
     // URL del endpoint de los asistentes
-    const url = 'https://api.openai.com/v1/assistants/asst_q76JkOu1OlGSW2eNcGuOnhaZ/threads';
+    const url = 'https://api.openai.com/v1/assistants/asst_q76JkOu1OlGSW2eNcGuOnhaZ';
 
     // Ajuste del cuerpo de la solicitud para incluir las nuevas capacidades
     const data = {
