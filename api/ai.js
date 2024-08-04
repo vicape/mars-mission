@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY, // Asegúrate de que esta variable de entorno está configurada en Vercel
+  apiKey: process.env.OPENAI_API_KEY, // Asegúrate de que esta variable está configurada en Vercel
 });
 
 export default async (req, res) => {
@@ -15,45 +15,33 @@ export default async (req, res) => {
   }
 
   try {
-    // Usa el ID de tu asistente específico
+    // ID del asistente
     const assistantId = "asst_q76Jk0ulOIGSW2eNcGuOnhaZ";
 
-    // Crea un hilo para el asistente
-    const thread = await openai.threads.create({
+    // Crear un nuevo hilo
+    const thread = await openai.chat.threads.create({
       assistant_id: assistantId,
+      messages: [{ role: 'user', content: prompt }]
     });
 
-    console.log('Thread created:', thread.id);
-
-    // Añade un mensaje al hilo
-    const message = await openai.threads.messages.create({
+    // Crear una ejecución para obtener la respuesta
+    const run = await openai.chat.threads.runs.create({
       thread_id: thread.id,
-      role: 'user',
-      content: prompt,
+      assistant_id: assistantId
     });
 
-    console.log('Message sent:', message.id);
-
-    // Ejecuta el asistente y espera la respuesta
-    const run = await openai.threads.runs.create({
-      thread_id: thread.id,
-      assistant_id: assistantId,
-    });
-
-    console.log('Run started:', run.id);
-
-    // Polling for the result
+    // Hacer polling para obtener el resultado final
     let result;
     do {
-      result = await openai.threads.runs.retrieve({
+      result = await openai.chat.threads.runs.retrieve({
         thread_id: thread.id,
-        run_id: run.id,
+        run_id: run.id
       });
     } while (result.status === 'in_progress');
 
     if (result.status === 'completed') {
-      const finalMessages = await openai.threads.messages.list({
-        thread_id: thread.id,
+      const finalMessages = await openai.chat.threads.messages.list({
+        thread_id: thread.id
       });
 
       const responseMessage = finalMessages.data.slice(-1)[0].content;
