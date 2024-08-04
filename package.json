@@ -11,7 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "@supabase/supabase-js": "^2.43.5",
-    "axios": "^0.21.1",
+    "axios": "^0.21.4",
     "body-parser": "^1.20.2",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
