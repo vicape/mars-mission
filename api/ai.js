@@ -17,18 +17,18 @@ router.post('/chat', async (req, res) => {
   }
 
   try {
-    // Crear una consulta al asistente personalizado
-    const response = await openai.assistants.threads.create({
-      assistant_id: "asst_q76Jk0ulOIGSW2eNcGuOnhaZ",  // Utilizar el ID del asistente personalizado
+    // Crear una consulta al asistente personalizado usando chat completions
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",  // Usar el modelo correcto
       messages: [
-        { role: 'system', content: 'Start' },  // Mensaje de inicio para el asistente
+        { role: 'system', content: 'Eres un asistente especializado en informar y educar sobre viajes y exploración en Marte. Responde solo con información relacionada con Marte.' },
         { role: 'user', content: prompt }
       ],
-      configuration: {
-        model: "gpt-3.5-turbo-0125", // Usa un modelo disponible y específico si es necesario
-        temperature: 0.7,
-        top_p: 1.0
-      }
+      temperature: 0.7,
+      max_tokens: 150,
+      top_p: 1.0,
+      frequency_penalty: 0.0,
+      presence_penalty: 0.0
     });
 
     // Extraer el contenido de la respuesta del asistente
