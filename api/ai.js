@@ -1,57 +1,20 @@
-const express = require('express');
-const { Configuration, OpenAIApi } = require('openai');
-const router = express.Router();
+const { OpenAI } = require("openai");
 
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY
-});
-const openai = new OpenAIApi(configuration);
+const apiKey = process.env.OPENAI_API_KEY; // Asegúrate de que la clave API está configurada en tu entorno
+const openai = new OpenAI(apiKey);
 
-router.post('/chat', async (req, res) => {
-  const { prompt } = req.body;
-  if (!prompt) {
-    return res.status(400).json({ error: 'No prompt provided' });
-  }
-
+async function queryOpenAI() {
   try {
-    // Crear un nuevo thread para manejar la conversación
-    const thread = await openai.threads.create({
-      assistant_id: "asst_q76Jk0ulOIGSW2eNcGuOnhaZ"
-    });
-
-    // Enviar el mensaje del usuario al asistente dentro del thread
-    const message = await openai.threads.messages.create({
-      thread_id: thread.data.id,
+    const response = await openai.Completion.create({
       model: "gpt-3.5-turbo",
-      messages: [{
-        role: 'user',
-        content: prompt
-      }]
+      prompt: "What are the major impacts of climate change?",
+      max_tokens: 100
     });
 
-    // Procesar y esperar la respuesta del asistente
-    const run = await openai.threads.runs.create({
-      thread_id: thread.data.id,
-      assistant_id: "asst_q76Jk0ulOIGSW2eNcGuOnhaZ"
-    });
-
-    // Esperar hasta que la ejecución esté completa para obtener la respuesta final
-    const finalRun = await openai.threads.runs.retrieve({
-      thread_id: thread.data.id,
-      run_id: run.data.id
-    });
-
-    // Recuperar todos los mensajes después de la respuesta del asistente
-    const messages = await openai.threads.messages.list({
-      thread_id: thread.data.id
-    });
-
-    // Enviar la respuesta del asistente al cliente
-    res.json({ messages: messages.data });
+    console.log("Response from OpenAI:", response.choices[0].text);
   } catch (error) {
-    console.error('Error interacting with OpenAI API:', error);
-    res.status(500).json({ error: error.message || 'Error processing request' });
+    console.error("Error interacting with OpenAI API:", error);
   }
-});
+}
 
-module.exports = router;
+queryOpenAI();
