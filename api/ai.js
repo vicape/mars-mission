@@ -10,7 +10,7 @@ router.post('/chat', async (req, res) => {
         return res.status(400).json({ error: 'No prompt provided' });
     }
 
-    const url = 'https://api.openai.com/v1/chat/completions';
+    const url = 'https://api.openai.com/v1/assistants/asst_q76JkOu1OlGSW2eNcGuOnhaZ';  //'https://api.openai.com/v1/chat/completions';
     const data = {
         model: "gpt-3.5-turbo",  // Asegúrate de usar un modelo disponible
         messages: [
