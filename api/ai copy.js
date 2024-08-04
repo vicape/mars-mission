@@ -10,11 +10,11 @@ router.post('/chat', async (req, res) => {
         return res.status(400).json({ error: 'No prompt provided' });
     }
 
-    // Cambiamos la URL al endpoint de asistentes con el ID de tu asistente
-    const url = 'https://api.openai.com/v1/assistants/asst_q76JkOu1OlGSW2eNcGuOnhaZ/thread';
+    const url = 'https://api.openai.com/v1/chat/completions';
     const data = {
+        model: "gpt-3.5-turbo",  // Asegúrate de usar un modelo disponible
         messages: [
-            { role: 'system', content: 'Start' },
+            { role: 'system', content: 'Eres un asistente especializado en informar y educar sobre viajes y exploración en Marte. Responde solo con información relacionada con Marte.' },
             { role: 'user', content: prompt }
         ]
     };
@@ -37,8 +37,7 @@ router.post('/chat', async (req, res) => {
         }
 
         const result = await response.json();
-        // Asegúrate de acceder correctamente a la respuesta del asistente
-        res.json(result.data);
+        res.json(result.choices[0].message.content);
     } catch (error) {
         console.error('Error interacting with OpenAI API:', error);
         res.status(500).json({ error: error.message || 'Error processing request' });
