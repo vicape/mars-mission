@@ -1,17 +1,10 @@
-const express = require('express');
-const router = express.Router(); 
-
-// Cargar la clave API de OpenAI desde las variables de entorno
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-
 router.post('/chat', async (req, res) => {
     const { prompt } = req.body;
     if (!prompt) {
         return res.status(400).json({ error: 'No prompt provided' });
     }
 
-    // Cambiamos la URL al endpoint de asistentes con el ID de tu asistente
-    const url = 'https://api.openai.com/v1/assistants/asst_q76JkOu1OlGSW2eNcGuOnhaZ/';
+    const url = 'https://api.openai.com/v1/assistants/asst_q76JkOu1OlGSW2eNcGuOnhaZ/threads'; // URL corregida
     const data = {
         messages: [
             { role: 'system', content: 'Start' },
@@ -20,7 +13,6 @@ router.post('/chat', async (req, res) => {
     };
 
     try {
-        // Importación dinámica de node-fetch para ES Modules
         const fetch = (await import('node-fetch')).default;
         const response = await fetch(url, {
             method: 'POST',
@@ -37,12 +29,9 @@ router.post('/chat', async (req, res) => {
         }
 
         const result = await response.json();
-        // Asegúrate de acceder correctamente a la respuesta del asistente
         res.json(result.data);
     } catch (error) {
         console.error('Error interacting with OpenAI API:', error);
         res.status(500).json({ error: error.message || 'Error processing request' });
     }
 });
-
-module.exports = router;
