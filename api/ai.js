@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY, // Asegúrate de que esta variable está configurada en Vercel
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 export default async function handler(req, res) {
@@ -15,10 +15,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // ID del asistente
-    const assistantId = "asst_q76Jk0ulOIGSW2eNcGuOnhaZ";
-
-    // Crear un nuevo hilo y obtener respuesta
     const chatCompletion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [
@@ -27,7 +23,6 @@ export default async function handler(req, res) {
       ]
     });
 
-    // Respuesta del asistente
     const assistantMessage = chatCompletion.choices[0].message.content;
     res.status(200).json({ message: assistantMessage });
   } catch (error) {
