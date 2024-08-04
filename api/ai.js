@@ -10,25 +10,31 @@ router.post('/chat', async (req, res) => {
         return res.status(400).json({ error: 'No prompt provided' });
     }
 
-    // URL actualizada para el endpoint de asistentes con el ID del asistente
-    const url = 'https://api.openai.com/v1/assistants/asst_q76JkOu1OlGSW2eNcGuOnhaZ';
+    // URL del endpoint de los asistentes
+    const url = 'https://api.openai.com/v1/assistants/asst_q76JkOu1OlGSW2eNcGuOnhaZ/threads';
 
-    // Ajustar la estructura de datos para enviar el mensaje al asistente
+    // Ajuste del cuerpo de la solicitud para incluir las nuevas capacidades
     const data = {
         messages: [
-            { role: 'system', content: 'Start' },
             { role: 'user', content: prompt }
-        ]
+        ],
+        configuration: {
+            model: "gpt-3.5-turbo-0125", // Usar el modelo afinado si es necesario
+            temperature: 0.7,            // Ajusta según la creatividad deseada
+            response_format: "json",
+            top_p: 0.9
+        }
     };
 
     try {
+        // Importación dinámica de node-fetch para ES Modules
         const fetch = (await import('node-fetch')).default;
         const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${OPENAI_API_KEY}`,
-                'OpenAI-Beta': 'assistants=v2'  // Incluir el encabezado requerido por la API
+                'OpenAI-Beta': 'assistants=v2'  // Asegúrate de incluir este encabezado
             },
             body: JSON.stringify(data)
         });
@@ -39,8 +45,8 @@ router.post('/chat', async (req, res) => {
         }
 
         const result = await response.json();
-        // Ajusta el acceso a los datos según la estructura exacta de la respuesta
-        res.json(result.data);
+        // Ajusta el acceso a los datos según la estructura de respuesta
+        res.json(result.choices[0].message.content); // Verifica la estructura exacta de la respuesta
     } catch (error) {
         console.error('Error interacting with OpenAI API:', error);
         res.status(500).json({ error: error.message || 'Error processing request' });
