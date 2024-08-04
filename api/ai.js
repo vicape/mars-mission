@@ -11,7 +11,7 @@ router.post('/chat', async (req, res) => {
     }
 
     // Cambiamos la URL al endpoint de asistentes con el ID de tu asistente
-    const url = 'https://api.openai.com/v1/assistants/asst_q76JkOu1OlGSW2eNcGuOnhaZ/thread';
+    const url = 'https://api.openai.com/v1/assistants/asst_q76JkOu1OlGSW2eNcGuOnhaZ/';
     const data = {
         messages: [
             { role: 'system', content: 'Start' },
