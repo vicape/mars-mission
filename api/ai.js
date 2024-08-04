@@ -10,17 +10,18 @@ router.post('/chat', async (req, res) => {
         return res.status(400).json({ error: 'No prompt provided' });
     }
 
-    const url = 'https://api.openai.com/v1/chat/completions';
+    // Cambio de URL para apuntar al endpoint de asistentes con el ID del asistente
+    const url = 'https://api.openai.com/v1/assistants/asst_q76JkOu1OlGSW2eNcGuOnhaZ/threads';
+    
+    // Ajustar la estructura de datos para enviar el mensaje al asistente
     const data = {
-        model: "gpt-3.5-turbo",  // Asegúrate de usar un modelo disponible
         messages: [
-            { role: 'system', content: 'Eres un asistente especializado en informar y educar sobre viajes y exploración en Marte. Responde solo con información relacionada con Marte.' },
+            { role: 'system', content: 'Start' },
             { role: 'user', content: prompt }
         ]
     };
 
     try {
-        // Importación dinámica de node-fetch para ES Modules
         const fetch = (await import('node-fetch')).default;
         const response = await fetch(url, {
             method: 'POST',
@@ -37,7 +38,8 @@ router.post('/chat', async (req, res) => {
         }
 
         const result = await response.json();
-        res.json(result.choices[0].message.content);
+        // Asegúrate de acceder a la respuesta correcta desde el objeto JSON
+        res.json(result.data); // Aquí debes verificar la estructura exacta de la respuesta y ajustar esta línea
     } catch (error) {
         console.error('Error interacting with OpenAI API:', error);
         res.status(500).json({ error: error.message || 'Error processing request' });
