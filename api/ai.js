@@ -6,7 +6,6 @@ const openai = new OpenAI({
 });
 
 export default async function handler(req, res) {
-  // Solo aceptamos solicitudes POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Only POST requests are allowed' });
   }
@@ -18,14 +17,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Crear un nuevo thread y enviar el mensaje
+    // Crea un nuevo hilo y envía el mensaje
     const thread = await openai.threads.create({
       messages: [
         { role: 'user', content: prompt }
       ]
     });
 
-    // Ejecutar el thread usando el assistant ID
+    // Ejecuta el hilo usando el ID del asistente
     const run = await openai.threads.runs.create({
       thread_id: thread.id,
       assistant_id: 'asst_WaBmHVv5hqSTelXf1azvBbJh'
@@ -38,7 +37,6 @@ export default async function handler(req, res) {
     });
 
     while (runStatus.status !== 'completed') {
-      // Espera un segundo antes de verificar el estado nuevamente
       await new Promise(res => setTimeout(res, 1000));
       runStatus = await openai.threads.runs.retrieve({
         thread_id: thread.id,
@@ -46,7 +44,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // Obtener la lista de mensajes del thread
+    // Obtener la lista de mensajes del hilo
     const messages = await openai.threads.messages.list({
       thread_id: thread.id
     });
@@ -56,7 +54,7 @@ export default async function handler(req, res) {
 
     res.status(200).json({ message: assistantMessage });
   } catch (error) {
-    console.error('Error interacting with OpenAI API:', error.response ? error.response.data : error.message);
+    console.error('Error interacting with OpenAI API:', error);
     res.status(500).json({ error: error.message || 'Error processing request' });
   }
 }
