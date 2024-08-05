@@ -1,60 +1,47 @@
-import OpenAI from 'openai';
+const express = require('express');
+const router = express.Router(); 
 
-// Inicializa OpenAI con tu API key
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+// Cargar la clave API de OpenAI desde las variables de entorno
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Only POST requests are allowed' });
-  }
-
-  const { prompt } = req.body;
-
-  if (!prompt) {
-    return res.status(400).json({ error: 'No prompt provided' });
-  }
-
-  try {
-    // Crea un nuevo hilo y envía el mensaje
-    const thread = await openai.threads.create({
-      messages: [
-        { role: 'user', content: prompt }
-      ]
-    });
-
-    // Ejecuta el hilo usando el ID del asistente
-    const run = await openai.threads.runs.create({
-      thread_id: thread.id,
-      assistant_id: 'asst_WaBmHVv5hqSTelXf1azvBbJh'
-    });
-
-    // Espera hasta que el run esté completo
-    let runStatus = await openai.threads.runs.retrieve({
-      thread_id: thread.id,
-      run_id: run.id
-    });
-
-    while (runStatus.status !== 'completed') {
-      await new Promise(res => setTimeout(res, 1000));
-      runStatus = await openai.threads.runs.retrieve({
-        thread_id: thread.id,
-        run_id: run.id
-      });
+router.post('/chat', async (req, res) => {
+    const { prompt } = req.body;
+    if (!prompt) {
+        return res.status(400).json({ error: 'No prompt provided' });
     }
 
-    // Obtener la lista de mensajes del hilo
-    const messages = await openai.threads.messages.list({
-      thread_id: thread.id
-    });
+    const url = 'https://api.openai.com/v1/chat/completions';
+    const data = {
+        model: "gpt-3.5-turbo",  // Asegúrate de usar un modelo disponible
+        messages: [
+            { role: 'system', content: 'Eres un asistente especializado en informar y educar sobre viajes y exploración en Marte. Responde solo con información relacionada con Marte.' },
+            { role: 'user', content: prompt }
+        ]
+    };
 
-    // Extraer el contenido del mensaje de respuesta
-    const assistantMessage = messages.data.find(message => message.role === 'assistant').content[0].text.value;
+    try {
+        // Importación dinámica de node-fetch para ES Modules
+        const fetch = (await import('node-fetch')).default;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${OPENAI_API_KEY}`
+            },
+            body: JSON.stringify(data)
+        });
 
-    res.status(200).json({ message: assistantMessage });
-  } catch (error) {
-    console.error('Error interacting with OpenAI API:', error);
-    res.status(500).json({ error: error.message || 'Error processing request' });
-  }
-}
+        if (!response.ok) {
+            const errorInfo = await response.json();
+            throw new Error(`OpenAI API responded with status: ${response.status}, body was: ${JSON.stringify(errorInfo)}`);
+        }
+
+        const result = await response.json();
+        res.json(result.choices[0].message.content);
+    } catch (error) {
+        console.error('Error interacting with OpenAI API:', error);
+        res.status(500).json({ error: error.message || 'Error processing request' });
+    }
+});
+
+module.exports = router;
