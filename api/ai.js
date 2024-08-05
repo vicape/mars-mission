@@ -1,47 +1,47 @@
 const express = require('express');
-const router = express.Router(); 
+const { Configuration, OpenAIApi } = require('openai');
 
-// Cargar la clave API de OpenAI desde las variables de entorno
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const app = express();
+app.use(express.json());
 
-router.post('/chat', async (req, res) => {
-    const { prompt } = req.body;
-    if (!prompt) {
-        return res.status(400).json({ error: 'No prompt provided' });
-    }
+const configuration = new Configuration({
+    apiKey: process.env.OPENAI_API_KEY
+});
+const openai = new OpenAIApi(configuration);
 
-    const url = 'https://api.openai.com/v1/chat/completions';
-    const data = {
-        model: "gpt-3.5-turbo",  // Asegúrate de usar un modelo disponible
-        messages: [
-            { role: 'system', content: 'Eres un asistente especializado en informar y educar sobre viajes y exploración en Marte. Responde solo con información relacionada con Marte.' },
-            { role: 'user', content: prompt }
-        ]
-    };
+// Ruta para iniciar el chat con el asistente
+app.post('/chat-with-assistant', async (req, res) => {
+    const { message } = req.body;
 
     try {
-        // Importación dinámica de node-fetch para ES Modules
-        const fetch = (await import('node-fetch')).default;
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${OPENAI_API_KEY}`
-            },
-            body: JSON.stringify(data)
+        // Crear un thread
+        const thread = await openai.threads.create({
+            assistant_id: 'asst_WaBmHVv5hqSTelXf1azvBbJh',  // Reemplaza con tu Assistant ID
         });
 
-        if (!response.ok) {
-            const errorInfo = await response.json();
-            throw new Error(`OpenAI API responded with status: ${response.status}, body was: ${JSON.stringify(errorInfo)}`);
-        }
+        // Añadir un mensaje al thread
+        const response = await openai.threads.messages.create(thread.data.id, {
+            messages: [
+                { role: "user", content: message }
+            ]
+        });
 
-        const result = await response.json();
-        res.json(result.choices[0].message.content);
+        // Opcional: ejecutar el thread para obtener la respuesta
+        const run = await openai.threads.runs.create(thread.data.id);
+
+        // Esperar y obtener las respuestas completas
+        const messages = await openai.threads.messages.list(thread.data.id);
+
+        // Enviar la última respuesta del asistente
+        const lastMessage = messages.data[messages.data.length - 1];
+        res.json({ message: lastMessage.content });
     } catch (error) {
-        console.error('Error interacting with OpenAI API:', error);
-        res.status(500).json({ error: error.message || 'Error processing request' });
+        console.error('Error interacting with OpenAI:', error);
+        res.status(500).send('Error processing your request');
     }
 });
 
-module.exports = router;
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
