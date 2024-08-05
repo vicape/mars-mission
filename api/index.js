@@ -8,7 +8,7 @@ const { createClient } = require('@supabase/supabase-js');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const missionRoutes = require('./mission');  // Rutas para las misiones
-const aiRoutes = require('./ain');  // Añadido para incluir las rutas de OpenAI
+const aiRoutes = require('./ai');  // Añadido para incluir las rutas de OpenAI
 
 require('dotenv').config();
 
