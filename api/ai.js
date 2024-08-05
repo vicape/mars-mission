@@ -1,47 +1,57 @@
-const express = require('express');
-const { Configuration, OpenAIApi } = require('openai');
+const axios = require('axios');
 
-const app = express();
-app.use(express.json());
-
-const configuration = new Configuration({
-    apiKey: process.env.OPENAI_API_KEY
-});
-const openai = new OpenAIApi(configuration);
-
-// Ruta para iniciar el chat con el asistente
-app.post('/chat-with-assistant', async (req, res) => {
-    const { message } = req.body;
-
-    try {
-        // Crear un thread
-        const thread = await openai.threads.create({
-            assistant_id: 'asst_WaBmHVv5hqSTelXf1azvBbJh',  // Reemplaza con tu Assistant ID
-        });
-
-        // Añadir un mensaje al thread
-        const response = await openai.threads.messages.create(thread.data.id, {
-            messages: [
-                { role: "user", content: message }
-            ]
-        });
-
-        // Opcional: ejecutar el thread para obtener la respuesta
-        const run = await openai.threads.runs.create(thread.data.id);
-
-        // Esperar y obtener las respuestas completas
-        const messages = await openai.threads.messages.list(thread.data.id);
-
-        // Enviar la última respuesta del asistente
-        const lastMessage = messages.data[messages.data.length - 1];
-        res.json({ message: lastMessage.content });
-    } catch (error) {
-        console.error('Error interacting with OpenAI:', error);
-        res.status(500).send('Error processing your request');
+const openaiApi = axios.create({
+    baseURL: 'https://api.openai.com/v1',
+    headers: {
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+        'OpenAI-Beta': 'assistants=v2'
     }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+// Función para crear un nuevo thread
+async function createThread(assistantId) {
+    try {
+        const response = await openaiApi.post('/threads', {
+            assistant_id: assistantId
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error al crear thread:', error.response?.data || error.message);
+        return null;
+    }
+}
+
+// Función para enviar un mensaje a un thread específico
+async function sendMessage(threadId, message) {
+    try {
+        const response = await openaiApi.post(`/threads/${threadId}/messages`, {
+            messages: [{
+                role: "user",
+                content: message
+            }]
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error al enviar mensaje:', error.response?.data || error.message);
+        return null;
+    }
+}
+
+// Ejemplo de uso de las funciones
+async function interactWithAssistant() {
+    const assistantId = 'tu-assistant-id'; // Reemplaza con el ID de tu asistente
+    const thread = await createThread(assistantId);
+
+    if (thread && thread.id) {
+        const threadId = thread.id;
+        const userMessage = "¿Cuál es tu función?"; // Supongamos que esto viene del frontend
+        const messageResponse = await sendMessage(threadId, userMessage);
+
+        console.log('Respuesta del assistant:', messageResponse);
+        // Aquí enviarías la respuesta de vuelta al frontend
+    }
+}
+
+// Llamar a la función principal para iniciar la interacción
+interactWithAssistant();
